@@ -92,6 +92,9 @@ eights = data[digits.target == 8]
 KF = model_selection.KFold(n_splits=5, shuffle=True)
 k = 1
 
+#The total values to be used later
+total_a = 0.0
+total_b = 0.0
 #Merge the fives and eights data
 data = np.asarray(fives.tolist() + eights.tolist())
 
@@ -116,8 +119,8 @@ for train_index, test_index in KF.split(data):
     #from b.)
     feature_5, feature_8 = get_normalized_variance(training_fives, training_eights)
     
-    task_a = 0
-    task_b = 0
+    task_a = 0.0
+    task_b = 0.0
     n = 0
     for i in test_index:
         n += 1
@@ -138,8 +141,16 @@ for train_index, test_index in KF.split(data):
         elif ((eights == data[i]).all(1).any() and b == -1):
             task_b += 1
     
-    print("Accuracy of task a.): %.3f" %(task_a/float(n)) )
-    print("Accuracy of task b.): %.3f" %(task_b/float(n)) )
+    print("Accuracy of task a.): %.3f %%" %(100 * task_a/float(n)) )
+    print("Accuracy of task b.): %.3f %%" %(100 * task_b/float(n)) )
+    total_a += (task_a/float(n))
+    total_b += (task_b/float(n))
+
+total_a = total_a/5
+total_b = total_b/5
+print("==== Average a.) = %.3f %%" % (total_a*100))
+print("==== Average b.) = %.3f %%" % (total_b*100))
+
 
 
     
