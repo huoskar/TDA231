@@ -29,16 +29,18 @@ mu = np.zeros((k, 2))
 for i in range(0, k):
     mu[i] = [random.uniform(min(X[:, 0]), max(X[:, 0])), random.uniform(min(X[:, 1]), max(X[:, 1]))]
 
-#Empty list for containing the class points.
-classlist = [[]] * k
+# Loop through points
 for i in range(0, len(X)):
+    # Find class for point    
     class_ = find_closest_class(mu, X[i])
-    classlist[class_].append(X[i].tolist())
-#print(classlist[0])
+    # Set it in z
+    z[i,class_] = 1
+    
+# Loop through k again to plot the classes
+for i in range(0,k):
+    indices = [i for i, x in enumerate(z[:,i]) if x == 1]
+    plt.scatter(X[indices, 0], X[indices, 1])
 
-for class_ in classlist:
-    print[class_[0][:]]
-    plt.scatter(class_[:][0], class_[:][1])
-#plt.scatter(X[:, 0], X[:, 1])
-#plt.scatter(mu[:, 0], mu[:, 1])
+# Also plot mu
+plt.scatter(mu[:, 0], mu[:, 1] , color='r')
 plt.show()
