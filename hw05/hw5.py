@@ -21,26 +21,41 @@ def find_closest_class(mu, point):
     return tmp
 
 # k is an arbitrary number of clusters that we wish to classify. Note that 0 is a class, so k = 2 would make 3 classes.
-k = 3
-# z[n, k]= 0 means that x[n] does not belong to class k. z[n,k]= 1 means that it does belong to class k
-z = np.zeros((len(X), k))
-#mu are the guessed points
-mu = np.zeros((k, 2))
-for i in range(0, k):
-    mu[i] = [random.uniform(min(X[:, 0]), max(X[:, 0])), random.uniform(min(X[:, 1]), max(X[:, 1]))]
 
-# Loop through points
-for i in range(0, len(X)):
-    # Find class for point    
-    class_ = find_closest_class(mu, X[i])
-    # Set it in z
-    z[i,class_] = 1
+def kmeans(k, data):
+
+    # z[n, k]= 0 means that x[n] does not belong to class k. z[n,k]= 1 means that it does belong to class k
     
-# Loop through k again to plot the classes
-for i in range(0,k):
-    indices = [i for i, x in enumerate(z[:,i]) if x == 1]
-    plt.scatter(X[indices, 0], X[indices, 1])
+    # Guess mu  
+    prevmu = np.zeros((k, 2))
+    mu = np.zeros((k,2))
+    for i in range(0, k):
+        mu[i] = [random.uniform(min(data[:, 0]), max(data[:, 0])), random.uniform(min(data[:, 1]), max(data[:, 1]))]
+    iterations = 0
+    while(not(np.array_equal(prevmu, mu))):
+        iterations +=1
+        # Loop through points and assign each point to its closest mean
+        z = np.zeros((len(data), k))
+        for i in range(0, len(data)):   
+            class_ = find_closest_class(mu, data[i])
+            # Set it in z
+            z[i,class_] = 1
 
-# Also plot mu
-plt.scatter(mu[:, 0], mu[:, 1] , color='r')
-plt.show()
+        prevmu = np.copy(mu)
+        
+        for i in range(0,k):
+            indices = [a for a, x in enumerate(z[:,i]) if x == 1]
+            mu[i] = (np.mean(data[indices,0]),np.mean(data[indices,1]))
+ 
+    
+    # Loop through k again to plot the classes
+    for i in range(0,k):
+        indices = [i for i, x in enumerate(z[:,i]) if x == 1]
+        plt.scatter(data[indices, 0], data[indices, 1])
+
+    # Also plot mu
+    plt.scatter(mu[:, 0], mu[:, 1] , color='r')
+    print(iterations)
+    plt.show()
+
+kmeans(3,X)
