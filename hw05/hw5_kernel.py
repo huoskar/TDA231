@@ -1,88 +1,67 @@
-import scipy.io
-import numpy as np
-import matplotlib.pyplot as plt
-import math
-import random
-from sklearn.gaussian_process.kernels import RBF
+# Task c and d
 
-mat = scipy.io.loadmat('hw5_p1a.mat')
-X = mat['X']
+# k function (RBF kernel)
+def k_func(x, xp, sigma):
+    return np.exp(- np.linalg.norm(x - xp) ** 2 / (2 * sigma ** 2))
 
-#takes two points and returns the distance netween them as a float
-def euclidian_distance(point_origin, point_target):
-    delta_distance = [point_origin[0] - point_target[0], point_origin[1] - point_target[1]]
-    return math.sqrt(delta_distance[0]**2 + delta_distance[1]**2)
 
-def find_closest_class(mu, point):
-    tmp = 0
-    for i in range(1, len(mu)):
-        if(euclidian_distance(mu[i], point) < euclidian_distance(mu[tmp], point)):
-            tmp = i
-    return tmp
-
-# k is an arbitrary number of clusters that we wish to classify. Note that 0 is a class, so k = 2 would make 3 classes.
-
-def kmeans(k, data):
-
-    # z[n, k]= 0 means that x[n] does not belong to class k. z[n,k]= 1 means that it does belong to class k
+def kmeans_kernel(given_k, data, sigma):
+    # Gaussian RBF kernel
     
-    # Guess mu  
-    prevmu = np.zeros((k, 2))
-    mu = np.zeros((k,2))
-    for i in range(0, k):
-        mu[i] = [random.uniform(min(data[:, 0]), max(data[:, 0])), random.uniform(min(data[:, 1]), max(data[:, 1]))]
-    iterations = 0
-    while(not(np.array_equal(prevmu, mu))):
-        iterations +=1
-        # Loop through points and assign each point to its closest mean
-        z = np.zeros((len(data), k))
-        for i in range(0, len(data)):   
-            class_ = find_closest_class(mu, data[i])
-            # Set it in z
-            z[i,class_] = 1
-        if(iterations == 2):
-            z_2 = np.copy(z)
-            mu_2 = np.copy(mu)
+    #initialize random classes
+    z = np.zeros((len(data), given_k))
+    init_random_z = np.random.randint(given_k, size=len(data))
+    for i in range(0, len(z)):
+        z[i, init_random_z[i]] = 1
+    not_converged = True
+    while(not_converged):
+        # Loop to K
+        z_new = np.zeros((len(data), given_k))
+        distances = np.zeros((len(data), given_k))
+        for k in range(0, given_k):
+            N_k = np.sum(z[:,k])
+            
+            # create the ml sum
+            ml_sum = 0
+            for m in range(0, len(data)):
+                for l in range(0,len(data)):
+                    ml_sum += z[m,k] * z[l,k] * k_func(data[m], data[l], sigma)
+            third_val = ml_sum * (1 / (N_k * N_k))
+            # Loop to N
+            for n in range(0, len(data)):
+                m_sum = 0
+                for m in range(0, len(data)):
+                    m_sum += z[m,k] * k_func(data[n],data[m], sigma)
+                second_val = m_sum *(2 / (N_k))
+                
+                distances[n,k]= k_func(data[n],data[n], sigma) - second_val + third_val
         
+        tmp = 100 # Arbitrary big number
+        for index in range(0, len(data)):
+            for k in range(0, given_k):
+                if tmp > distances[index,k] :
+                    tmp = distances[index,k]
+                    sol_k = k
+            z_new[index,sol_k] = 1
+            
+        not_converged = not (np.array_equal(z, z_new))
+        z = z_new
         
-        prevmu = np.copy(mu)
-        
-        for i in range(0,k):
-            indices = [a for a, x in enumerate(z[:,i]) if x == 1]
-            mu[i] = (np.mean(data[indices,0]),np.mean(data[indices,1]))
- 
     plt.figure(figsize=(10,10))
-    # Plot all clusters
     legend = []
-    for i in range(0,k):
+    for i in range(0,given_k):
         indices = [a for a, x in enumerate(z[:,i]) if x == 1]
         plt.scatter(data[indices, 0], data[indices, 1])
         leg = ("Cluster %i" % (i+1))
         legend.append(leg)
-
-    # Also plot mu
-    plt.scatter(mu[:, 0], mu[:, 1])
-    legend.append("Mean points")
-    
-    # Find the points which changes class from iteration 2 to convergence
-    indices = [a for a, x in enumerate(np.abs(z-z_2)) if sum(x) != 0]
-    # Plot them with small black circles
-    plt.scatter(data[indices, 0], data[indices, 1],s=200, facecolors='none', edgecolors='k')
-    legend.append("Changed")
-    
-    print("Finished the kmeans algorithm in %i iterations." % iterations)
-    plt.title("KMeans algorithm with k = %i." % k)
-    plt.xlabel("x1")
-    plt.ylabel("x2")
-    plt.legend(legend)
     plt.show()
+    
+                
+# Loading the data
+mat = scipy.io.loadmat('hw5_p1b.mat')
+X = mat['X']
+# Running the linear kernel from above (Omitting the circles for difference between iterations in task b)
+#kmeans(2, X, difference_two_iterations=False)
 
-def kernel_k_means(k, data):
-    #initialize random classes
-    z = np.zeros((len(data), k))
-    init_random_z = np.random.randint(k, size=len(data))
-    for i in range(0, len(z)):
-        z[i, init_random_z[i]] = 1
-
-
-kernel_k_means(3,X)
+# Running the gaussian kernel
+kmeans_kernel(2,X , 0.2)
