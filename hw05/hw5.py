@@ -1,11 +1,10 @@
 import scipy.io
 import numpy as np
 import matplotlib.pyplot as plt
-import math
+#import math
 import random
 
 mat = scipy.io.loadmat('hw5_p1a.mat')
-print (mat.keys())
 X = mat['X']
 
 #takes two points and returns the distance netween them as a float
@@ -40,22 +39,41 @@ def kmeans(k, data):
             class_ = find_closest_class(mu, data[i])
             # Set it in z
             z[i,class_] = 1
-
+        if(iterations == 2):
+            z_2 = np.copy(z)
+            mu_2 = np.copy(mu)
+        
+        
         prevmu = np.copy(mu)
         
         for i in range(0,k):
             indices = [a for a, x in enumerate(z[:,i]) if x == 1]
             mu[i] = (np.mean(data[indices,0]),np.mean(data[indices,1]))
  
-    
-    # Loop through k again to plot the classes
+    plt.figure(figsize=(10,10))
+    # Plot all clusters
+    legend = []
     for i in range(0,k):
-        indices = [i for i, x in enumerate(z[:,i]) if x == 1]
+        indices = [a for a, x in enumerate(z[:,i]) if x == 1]
         plt.scatter(data[indices, 0], data[indices, 1])
+        leg = ("Cluster %i" % (i+1))
+        legend.append(leg)
 
     # Also plot mu
-    plt.scatter(mu[:, 0], mu[:, 1] , color='r')
-    print(iterations)
+    plt.scatter(mu[:, 0], mu[:, 1])
+    legend.append("Mean points")
+    
+    # Find the points which changes class from iteration 2 to convergence
+    indices = [a for a, x in enumerate(np.abs(z-z_2)) if sum(x) != 0]
+    # Plot them with small black circles
+    plt.scatter(data[indices, 0], data[indices, 1],s=200, facecolors='none', edgecolors='k')
+    legend.append("Changed")
+    
+    print("Finished the kmeans algorithm in %i iterations." % iterations)
+    plt.title("KMeans algorithm with k = %i." % k)
+    plt.xlabel("x1")
+    plt.ylabel("x2")
+    plt.legend(legend)
     plt.show()
 
-kmeans(3,X)
+kmeans(2,X)
